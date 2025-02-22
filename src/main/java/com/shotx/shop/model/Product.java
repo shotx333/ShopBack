@@ -64,10 +64,8 @@ public class Product {
         return price;
     }
     public void setPrice(Double price) {
-        DecimalFormat df = new DecimalFormat("#.##");
-        df.setMaximumFractionDigits(2);
-        df.format(price);
-        this.price = price;
+        this.price = Double.parseDouble(String.format("%.2f", price)
+        );
     }
     public Category getCategory() {
         return category;

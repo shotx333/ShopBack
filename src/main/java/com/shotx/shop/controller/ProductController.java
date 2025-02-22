@@ -1,6 +1,7 @@
 package com.shotx.shop.controller;
 
 import com.shotx.shop.model.Product;
+import com.shotx.shop.model.Users;
 import com.shotx.shop.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;

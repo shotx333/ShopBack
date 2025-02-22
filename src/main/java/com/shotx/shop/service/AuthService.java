@@ -11,9 +11,11 @@ import java.util.concurrent.TimeUnit;
 public class AuthService {
 
     private final RedisTemplate<String, String> redisTemplate;
+    private final UserService userService;
 
-    public AuthService(RedisTemplate<String, String> redisTemplate) {
+    public AuthService(RedisTemplate<String, String> redisTemplate, UserService userService) {
         this.redisTemplate = redisTemplate;
+        this.userService = userService;
     }
 
     public String generateToken(Users user) {
@@ -23,7 +25,10 @@ public class AuthService {
         return token;
     }
 
+
     public void revokeToken(String token) {
         redisTemplate.delete(token);
     }
+
+
 }
