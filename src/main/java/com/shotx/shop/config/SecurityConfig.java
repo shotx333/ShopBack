@@ -50,7 +50,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/h2-console/**").permitAll()
+                        .requestMatchers("/auth/**", "/h2-console/**", "/uploads/**").permitAll()
                         // Other endpoints require authentication.
                         .anyRequest().authenticated()
                 )

@@ -4,7 +4,9 @@ import com.shotx.shop.model.UserAuthRequest;
 import com.shotx.shop.model.Users;
 import com.shotx.shop.service.AuthService;
 import com.shotx.shop.service.UserService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -48,4 +50,14 @@ public class AuthController {
         authService.revokeToken(token);
         return ResponseEntity.ok("Logged out successfully");
     }
+    @GetMapping("/admin-check")
+    public ResponseEntity<?> adminCheck(Authentication authentication) {
+        // Assuming you have a User entity with a role property:
+        Users user = userService.findByUsername(authentication.getName());
+        if (user != null && "ADMIN".equalsIgnoreCase(user.getRole())) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not an admin");
+    }
+
 }
