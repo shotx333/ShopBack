@@ -28,9 +28,20 @@ public class CartService {
         }
         return cart;
     }
+    @Transactional
+    public Cart removeCartItem(String username, Long productId) {
+        Cart cart = getOrCreateCart(username);
+        cart.getItems().removeIf(item -> item.getProductId().equals(productId));
+        return cartRepository.save(cart);
+    }
 
     @Transactional
     public Cart addOrUpdateCartItem(String username, Long productId, int quantity) {
+        // Validate quantity
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1");
+        }
+
         Cart cart = getOrCreateCart(username);
         // Check if an item for the product already exists.
         CartItem existingItem = cart.getItems().stream()
@@ -47,14 +58,11 @@ public class CartService {
     }
 
     @Transactional
-    public Cart removeCartItem(String username, Long productId) {
-        Cart cart = getOrCreateCart(username);
-        cart.getItems().removeIf(item -> item.getProductId().equals(productId));
-        return cartRepository.save(cart);
-    }
-
-    @Transactional
     public Cart updateCartItem(String username, Long productId, int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("Quantity must be at least 1");
+        }
+
         Cart cart = getOrCreateCart(username);
         cart.getItems().stream()
                 .filter(item -> item.getProductId().equals(productId))
@@ -62,4 +70,5 @@ public class CartService {
                 .ifPresent(item -> item.setQuantity(quantity));
         return cartRepository.save(cart);
     }
+
 }

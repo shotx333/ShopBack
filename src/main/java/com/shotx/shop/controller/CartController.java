@@ -2,6 +2,7 @@ package com.shotx.shop.controller;
 
 import com.shotx.shop.model.Cart;
 import com.shotx.shop.service.CartService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ public class CartController {
 
     private final CartService cartService;
 
+    @Autowired
     public CartController(CartService cartService) {
         this.cartService = cartService;
     }
@@ -21,17 +23,6 @@ public class CartController {
     public ResponseEntity<Cart> getCart(Authentication authentication) {
         String username = authentication.getName();
         Cart cart = cartService.getOrCreateCart(username);
-        return ResponseEntity.ok(cart);
-    }
-
-    // Add or update a cart item.
-    @PostMapping("/item")
-    public ResponseEntity<Cart> addItemToCart(
-            Authentication authentication,
-            @RequestParam Long productId,
-            @RequestParam int quantity) {
-        String username = authentication.getName();
-        Cart cart = cartService.addOrUpdateCartItem(username, productId, quantity);
         return ResponseEntity.ok(cart);
     }
 
@@ -45,14 +36,46 @@ public class CartController {
         return ResponseEntity.ok(cart);
     }
 
-    // Optionally, add an endpoint to update quantity
-    @PutMapping("/item")
-    public ResponseEntity<Cart> updateCartItem(
+    // src/main/java/com/shotx/shop/controller/CartController.java
+    @PostMapping("/item")
+    public ResponseEntity<?> addItemToCart(
             Authentication authentication,
             @RequestParam Long productId,
             @RequestParam int quantity) {
+
+        if (quantity < 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Quantity must be at least 1");
+        }
+
         String username = authentication.getName();
-        Cart cart = cartService.updateCartItem(username, productId, quantity);
-        return ResponseEntity.ok(cart);
+        try {
+            Cart cart = cartService.addOrUpdateCartItem(username, productId, quantity);
+            return ResponseEntity.ok(cart);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/item")
+    public ResponseEntity<?> updateCartItem(
+            Authentication authentication,
+            @RequestParam Long productId,
+            @RequestParam int quantity) {
+
+        if (quantity < 1) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Quantity must be at least 1");
+        }
+
+        String username = authentication.getName();
+        try {
+            Cart cart = cartService.updateCartItem(username, productId, quantity);
+            return ResponseEntity.ok(cart);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
