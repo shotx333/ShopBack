@@ -1,7 +1,6 @@
 package com.shotx.shop.controller;
 
 import com.shotx.shop.model.Product;
-import com.shotx.shop.model.Users;
 import com.shotx.shop.service.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,13 +29,13 @@ public class ProductController {
         this.productService = productService;
     }
 
-    // GET all products
+    // GET all products - public access
     @GetMapping
     public ResponseEntity<List<Product>> getAllProducts() {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
-    // GET product by id
+    // GET product by id - public access
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable Long id) {
         return productService.getProductById(id)
@@ -93,5 +92,4 @@ public class ProductController {
 
         return ResponseEntity.ok(product);
     }
-
 }

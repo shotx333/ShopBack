@@ -50,8 +50,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints that don't require authentication
                         .requestMatchers("/auth/**", "/h2-console/**", "/uploads/**").permitAll()
-                        // Other endpoints require authentication.
+                        // Allow product and category read access without authentication
+                        .requestMatchers(request ->
+                                (request.getMethod().equals("GET") &&
+                                        (request.getRequestURI().startsWith("/products") ||
+                                                request.getRequestURI().startsWith("/categories")))
+                        ).permitAll()
+                        // Other endpoints require authentication
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers
