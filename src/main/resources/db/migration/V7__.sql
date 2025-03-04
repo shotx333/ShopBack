@@ -1,5 +1,8 @@
 ALTER TABLE product
-    ADD image_url VARCHAR(255) NULL;
+    ADD stock INT NULL;
+
+ALTER TABLE product
+    MODIFY stock INT NOT NULL;
 
 ALTER TABLE product
     MODIFY category_id BIGINT NOT NULL;
