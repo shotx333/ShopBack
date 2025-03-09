@@ -1,29 +1,23 @@
 package com.shotx.shop.controller;
 
 import com.shotx.shop.model.Product;
+import com.shotx.shop.model.ProductImage;
 import com.shotx.shop.service.ProductService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
 
     private final ProductService productService;
-    @Value("${app.upload.dir:uploads}")
-    private String uploadDir;
 
     public ProductController(ProductService productService) {
         this.productService = productService;
@@ -66,30 +60,55 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
+    // Upload image for a product (legacy method - uploads a single image)
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/{id}/upload-image")
-    public ResponseEntity<Product> uploadImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) throws IOException {
-        Product product = productService.getProductById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+    public ResponseEntity<Product> uploadImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) throws IOException {
 
-        // Clean the file name
-        String fileName = StringUtils.cleanPath(Objects.requireNonNull(file.getOriginalFilename()));
+        // Use the new multiple images approach, but make this the primary image
+        return ResponseEntity.ok(productService.uploadProductImage(id, file, true));
+    }
 
-        // Create the upload directory if it doesn't exist
-        Path uploadPath = Paths.get(uploadDir);
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
+    // Upload additional image for a product
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/images")
+    public ResponseEntity<Product> addProductImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "primary", defaultValue = "false") boolean isPrimary) throws IOException {
 
-        // Save the file to disk
-        Path filePath = uploadPath.resolve(fileName);
-        Files.copy(file.getInputStream(), filePath);
+        return ResponseEntity.ok(productService.uploadProductImage(id, file, isPrimary));
+    }
 
-        // Set the image URL (for example, assume static resources are served from /uploads/)
-        String imageUrl = "/uploads/" + fileName;
-        product.setImageUrl(imageUrl);
-        productService.updateProduct(id, product);  // Update product with image URL
+    // Delete a product image
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{productId}/images/{imageId}")
+    public ResponseEntity<Product> deleteProductImage(
+            @PathVariable Long productId,
+            @PathVariable Long imageId) {
 
-        return ResponseEntity.ok(product);
+        return ResponseEntity.ok(productService.deleteProductImage(productId, imageId));
+    }
+
+    // Set a product image as primary
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{productId}/images/{imageId}/primary")
+    public ResponseEntity<Product> setPrimaryProductImage(
+            @PathVariable Long productId,
+            @PathVariable Long imageId) {
+
+        return ResponseEntity.ok(productService.setPrimaryProductImage(productId, imageId));
+    }
+
+    // Reorder product images
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{productId}/images/reorder")
+    public ResponseEntity<Product> reorderProductImages(
+            @PathVariable Long productId,
+            @RequestBody List<Long> imageIds) {
+
+        return ResponseEntity.ok(productService.reorderProductImages(productId, imageIds));
     }
 }

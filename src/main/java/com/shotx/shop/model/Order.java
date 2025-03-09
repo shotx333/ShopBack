@@ -24,6 +24,13 @@ public class Order {
 
     private Double totalPrice;
 
+    // Payment status
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+
+    // Payment intent ID from Stripe
+    private String paymentIntentId;
+
     // Constructors
     public Order() {
         this.createdAt = LocalDateTime.now();
@@ -34,6 +41,7 @@ public class Order {
         this.items = items;
         this.totalPrice = totalPrice;
         this.createdAt = LocalDateTime.now();
+        this.paymentStatus = PaymentStatus.PENDING;
     }
 
     // Getters and Setters
@@ -66,5 +74,25 @@ public class Order {
     }
     public void setTotalPrice(Double totalPrice) {
         this.totalPrice = totalPrice;
+    }
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
+    }
+    public String getPaymentIntentId() {
+        return paymentIntentId;
+    }
+    public void setPaymentIntentId(String paymentIntentId) {
+        this.paymentIntentId = paymentIntentId;
+    }
+
+    // Payment status enum
+    public enum PaymentStatus {
+        PENDING,
+        PAID,
+        FAILED,
+        REFUNDED
     }
 }

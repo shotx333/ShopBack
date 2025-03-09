@@ -43,14 +43,14 @@ public class OrderService {
             item.setPrice(product.getPrice());
             total += itemPrice;
 
-            // Decrease stock for this item
-            productService.decreaseStock(item.getProductId(), item.getQuantity());
+            // We don't decrease stock yet - we'll do that after payment is confirmed
         }
 
         Order order = new Order();
         order.setUsername(username);
         order.setItems(items);
         order.setTotalPrice(total);
+        order.setPaymentStatus(Order.PaymentStatus.PENDING);
 
         // Set the back-reference for each order item.
         for (OrderItem item : items) {
@@ -62,5 +62,48 @@ public class OrderService {
 
     public List<Order> getOrdersForUser(String username) {
         return orderRepository.findByUsername(username);
+    }
+
+    public Order getOrderById(Long id, String username) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        // Security check - make sure the order belongs to the user
+        if (!order.getUsername().equals(username)) {
+            throw new RuntimeException("Unauthorized access to order");
+        }
+
+        return order;
+    }
+
+    @Transactional
+    public Order updatePaymentStatus(Long id, Order.PaymentStatus status, String username) {
+        Order order = getOrderById(id, username);
+        order.setPaymentStatus(status);
+
+        // If the payment was successful, decrease the stock
+        if (status == Order.PaymentStatus.PAID) {
+            for (OrderItem item : order.getItems()) {
+                productService.decreaseStock(item.getProductId(), item.getQuantity());
+            }
+        }
+
+        return orderRepository.save(order);
+    }
+
+    @Transactional
+    public Order processSuccessfulPayment(Long orderId, String paymentIntentId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        order.setPaymentStatus(Order.PaymentStatus.PAID);
+        order.setPaymentIntentId(paymentIntentId);
+
+        // Decrease stock for all items in the order
+        for (OrderItem item : order.getItems()) {
+            productService.decreaseStock(item.getProductId(), item.getQuantity());
+        }
+
+        return orderRepository.save(order);
     }
 }
