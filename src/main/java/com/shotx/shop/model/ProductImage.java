@@ -13,6 +13,7 @@ public class ProductImage {
     private String imageUrl;
 
     // Is this the main/primary image for the product
+    @Column(name = "`primary`") // Use backticks to escape the reserved keyword
     private boolean primary = false;
 
     // Display order for the images
