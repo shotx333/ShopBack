@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +41,44 @@ public class ProductService {
 
     public List<Product> getAllProducts() {
         return productRepository.findAll();
+    }
+
+    /**
+     * Search for products by name, description, or category
+     *
+     * @param query The search term
+     * @return List of products matching the search criteria
+     */
+    public List<Product> searchProducts(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return getAllProducts();
+        }
+        return productRepository.searchProducts(query.trim());
+    }
+
+    /**
+     * Search for products by name, description, or category within specified categories
+     *
+     * @param query The search term
+     * @param categoryIds List of category IDs to filter by
+     * @return List of products matching the search criteria and categories
+     */
+    public List<Product> searchProductsByCategories(String query, List<Long> categoryIds) {
+        if (query == null || query.trim().isEmpty()) {
+            // If no search query but category filters are present
+            if (categoryIds != null && !categoryIds.isEmpty()) {
+                return productRepository.findAll().stream()
+                        .filter(p -> p.getCategory() != null && categoryIds.contains(p.getCategory().getId()))
+                        .toList();
+            }
+            return getAllProducts();
+        }
+
+        if (categoryIds == null || categoryIds.isEmpty()) {
+            return searchProducts(query);
+        }
+
+        return productRepository.searchProductsByCategories(query.trim(), categoryIds);
     }
 
     public Optional<Product> getProductById(Long id) {

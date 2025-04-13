@@ -2,6 +2,11 @@ package com.shotx.shop.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 public class OrderItem {
@@ -12,7 +17,10 @@ public class OrderItem {
 
     private Long productId;
     private Integer quantity;
-    private Double price; // Price per unit at the time of ordering
+
+    @NotNull(message = "Price per unit is required")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Price must be a positive value")
+    private BigDecimal price; // Price per unit at the time of ordering
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonBackReference // This marks the back part of reference – the child side. It will be omitted during serialization.
@@ -21,10 +29,10 @@ public class OrderItem {
     // Constructors
     public OrderItem() {}
 
-    public OrderItem(Long productId, Integer quantity, Double price) {
+    public OrderItem(Long productId, Integer quantity, BigDecimal price) {
         this.productId = productId;
         this.quantity = quantity;
-        this.price = price;
+        this.price = price.setScale(2, RoundingMode.HALF_UP); // Ensure scale on creation
     }
 
     // Getters and Setters
@@ -46,11 +54,11 @@ public class OrderItem {
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
-    public void setPrice(Double price) {
-        this.price = price;
+    public void setPrice(BigDecimal price) {
+        this.price = price.setScale(2, RoundingMode.HALF_UP); // Ensure scale on update
     }
     public Order getOrder() {
         return order;

@@ -8,6 +8,7 @@ import com.shotx.shop.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -33,15 +34,15 @@ public class OrderService {
         }
 
         // Calculate total and set order reference for each item.
-        double total = 0.0;
+        BigDecimal total = BigDecimal.ZERO;
         for (OrderItem item : items) {
             // Retrieve product info to calculate price.
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProductId()));
 
-            double itemPrice = product.getPrice() * item.getQuantity();
-            item.setPrice(product.getPrice());
-            total += itemPrice;
+            BigDecimal itemPrice = product.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            item.setPrice(product.getPrice()); // Set the price per unit at the time of order
+            total = total.add(itemPrice);
 
             // We don't decrease stock yet - we'll do that after payment is confirmed
         }

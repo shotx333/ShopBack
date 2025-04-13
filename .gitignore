@@ -180,3 +180,5 @@ README.html
 .DS_Store
 out/
 .micronaut/
+
+uploads/

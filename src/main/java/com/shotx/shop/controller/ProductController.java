@@ -29,6 +29,19 @@ public class ProductController {
         return ResponseEntity.ok(productService.getAllProducts());
     }
 
+    // Search products - public access
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) List<Long> categories) {
+
+        if (categories != null && !categories.isEmpty()) {
+            return ResponseEntity.ok(productService.searchProductsByCategories(query, categories));
+        } else {
+            return ResponseEntity.ok(productService.searchProducts(query));
+        }
+    }
+
     // GET product by id - public access
     @GetMapping("/{id}")
     public ResponseEntity<?> getProductById(@PathVariable Long id) {

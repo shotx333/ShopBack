@@ -10,6 +10,7 @@ import com.stripe.param.PaymentIntentCreateParams;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,17 +60,20 @@ public class PaymentService {
      * @return Total amount in cents
      */
     private long calculateOrderAmount(List<OrderItem> items) {
-        double totalAmount = 0;
+        BigDecimal totalAmount = BigDecimal.ZERO;
 
         for (OrderItem item : items) {
             Product product = productRepository.findById(item.getProductId())
                     .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProductId()));
 
-            totalAmount += (product.getPrice() * item.getQuantity());
+            BigDecimal itemPrice = product.getPrice();
+            BigDecimal quantity = BigDecimal.valueOf(item.getQuantity());
+            totalAmount = totalAmount.add(itemPrice.multiply(quantity));
         }
 
         // Convert to cents (Stripe uses smallest currency unit)
-        return Math.round(totalAmount * 100);
+        // Multiply by 100 and convert to long
+        return totalAmount.multiply(BigDecimal.valueOf(100)).longValue();
     }
 
     /**

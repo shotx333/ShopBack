@@ -2,10 +2,13 @@ package com.shotx.shop.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +25,8 @@ public class Product {
     private String description;
 
     @NotNull(message = "Product price is required")
-    @Min(value = 0, message = "Price must be a positive value")
-    private Double price;
+    @DecimalMin(value = "0.0", inclusive = true, message = "Price must be a positive value")
+    private BigDecimal price;
 
     @ManyToOne
     @JoinColumn(name = "category_id")
@@ -46,10 +49,10 @@ public class Product {
     // Constructors
     public Product() {}
 
-    public Product(String name, String description, Double price, Category category, Integer stock) {
+    public Product(String name, String description, BigDecimal price, Category category, Integer stock) {
         this.name = name;
         this.description = description;
-        this.price = price;
+        this.price = price.setScale(2, RoundingMode.HALF_UP); // Ensure scale on creation
         this.category = category;
         this.stock = stock;
     }
@@ -79,12 +82,13 @@ public class Product {
         this.description = description;
     }
 
-    public Double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(Double price) {
-        this.price = Double.parseDouble(String.format("%.2f", price));
+    public void setPrice(BigDecimal price) {
+        // Ensure the price is always stored with 2 decimal places
+        this.price = price.setScale(2, RoundingMode.HALF_UP);
     }
 
     public Category getCategory() {

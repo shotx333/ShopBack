@@ -2,6 +2,11 @@ package com.shotx.shop.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,7 +27,9 @@ public class Order {
     @JsonManagedReference // This marks the forward part of the reference – the parent side.
     private List<OrderItem> items;
 
-    private Double totalPrice;
+    @NotNull(message = "Total price is required")
+    @DecimalMin(value = "0.0", inclusive = true, message = "Total price must be a positive value")
+    private BigDecimal totalPrice;
 
     // Payment status
     @Enumerated(EnumType.STRING)
@@ -36,10 +43,10 @@ public class Order {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Order(String username, List<OrderItem> items, Double totalPrice) {
+    public Order(String username, List<OrderItem> items, BigDecimal totalPrice) {
         this.username = username;
         this.items = items;
-        this.totalPrice = totalPrice;
+        this.totalPrice = totalPrice.setScale(2, RoundingMode.HALF_UP); // Ensure scale on creation
         this.createdAt = LocalDateTime.now();
         this.paymentStatus = PaymentStatus.PENDING;
     }
@@ -69,11 +76,11 @@ public class Order {
     public void setItems(List<OrderItem> items) {
         this.items = items;
     }
-    public Double getTotalPrice() {
+    public BigDecimal getTotalPrice() {
         return totalPrice;
     }
-    public void setTotalPrice(Double totalPrice) {
-        this.totalPrice = totalPrice;
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice.setScale(2, RoundingMode.HALF_UP); // Ensure scale on update
     }
     public PaymentStatus getPaymentStatus() {
         return paymentStatus;
