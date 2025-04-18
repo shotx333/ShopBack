@@ -4,6 +4,7 @@ import com.shotx.shop.model.Product;
 import com.shotx.shop.model.ProductImage;
 import com.shotx.shop.repository.ProductImageRepository;
 import com.shotx.shop.repository.ProductRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -12,7 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -155,42 +156,83 @@ public class ProductService {
      * @return The updated product
      * @throws IOException If there's an error saving the file
      */
-    @Transactional
-    public Product uploadProductImage(Long productId, MultipartFile file, boolean isPrimary) throws IOException {
+
+//    @Transactional
+//    public Product uploadProductImage(Long productId, MultipartFile file, boolean isPrimary) throws IOException {
+//        Product product = productRepository.findById(productId)
+//                .orElseThrow(() -> new RuntimeException("Product not found"));
+//
+//        // Generate a unique filename to avoid conflicts
+//        String originalFilename = file.getOriginalFilename();
+//        String extension = "";
+//        if (originalFilename != null && originalFilename.contains(".")) {
+//            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+//        }
+//        String filename = UUID.randomUUID().toString() + extension;
+//
+//        // Save the file
+//        Path filePath = Paths.get(uploadDir, filename);
+//        Files.copy(file.getInputStream(), filePath);
+//
+//        // Create a new product image
+//        String imageUrl = "/uploads/" + filename;
+//
+//        // If this is set as primary, update any existing primary images
+//        if (isPrimary) {
+//            product.getImages().forEach(img -> img.setIsPrimary(false));
+//        }
+//
+//        // Determine the display order (simply add it at the end)
+//        int displayOrder = product.getImages().size();
+//
+//        ProductImage productImage = new ProductImage(imageUrl, product, isPrimary, displayOrder);
+//        product.addImage(productImage);
+//
+//        // For backward compatibility, also set the imageUrl field if this is the primary image
+//        if (isPrimary) {
+//            product.setImageUrl(imageUrl);
+//        }
+//
+//        return productRepository.save(product);
+//    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public Product uploadProductImage(Long productId,
+                                      MultipartFile file,
+                                      boolean isPrimary) throws IOException {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
 
-        // Generate a unique filename to avoid conflicts
-        String originalFilename = file.getOriginalFilename();
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-        }
-        String filename = UUID.randomUUID().toString() + extension;
-
-        // Save the file
-        Path filePath = Paths.get(uploadDir, filename);
-        Files.copy(file.getInputStream(), filePath);
-
-        // Create a new product image
+        // — Generate a unique filename & write to disk —
+        String ext = Optional.ofNullable(file.getOriginalFilename())
+                .filter(n -> n.contains("."))
+                .map(n -> n.substring(n.lastIndexOf(".")))
+                .orElse("");
+        String filename = UUID.randomUUID() + ext;
+        Path target = Paths.get(uploadDir).resolve(filename);
+        Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
         String imageUrl = "/uploads/" + filename;
 
-        // If this is set as primary, update any existing primary images
+        // — If this is primary, clear the old one in‑memory —
         if (isPrimary) {
-            product.getImages().forEach(img -> img.setPrimary(false));
+            product.getImages().stream()
+                    .filter(ProductImage::isIsPrimary)
+                    .forEach(pi -> pi.setIsPrimary(false));
         }
 
-        // Determine the display order (simply add it at the end)
-        int displayOrder = product.getImages().size();
+        // — Build the new image and hook it up —
+        ProductImage img = new ProductImage();
+        img.setImageUrl(imageUrl);
+        img.setDisplayOrder(product.getImages().size());
+        img.setIsPrimary(isPrimary);
+        product.addImage(img);
 
-        ProductImage productImage = new ProductImage(imageUrl, product, isPrimary, displayOrder);
-        product.addImage(productImage);
-
-        // For backward compatibility, also set the imageUrl field if this is the primary image
+        // — Legacy single‑image support —
         if (isPrimary) {
             product.setImageUrl(imageUrl);
         }
 
+        // **Only save the product** (cascade will persist the new image)
         return productRepository.save(product);
     }
 
@@ -214,7 +256,7 @@ public class ProductService {
         }
 
         // If this was the primary image, assign a new primary image if there are other images
-        boolean wasPrimary = imageToDelete.isPrimary();
+        boolean wasPrimary = imageToDelete.isIsPrimary();
 
         // Remove the image
         product.removeImage(imageToDelete);
@@ -233,7 +275,7 @@ public class ProductService {
         // If the deleted image was primary and there are other images, set the first one as primary
         if (wasPrimary && !product.getImages().isEmpty()) {
             ProductImage newPrimary = product.getImages().get(0);
-            newPrimary.setPrimary(true);
+            newPrimary.setIsPrimary(true);
 
             // Update the legacy imageUrl as well
             product.setImageUrl(newPrimary.getImageUrl());
@@ -258,29 +300,27 @@ public class ProductService {
      */
     @Transactional
     public Product setPrimaryProductImage(Long productId, Long imageId) {
+        // 1) sanity‑check product + image
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
-
-        ProductImage newPrimaryImage = productImageRepository.findById(imageId)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
-
-        // Ensure the image belongs to the product
-        if (!newPrimaryImage.getProduct().getId().equals(product.getId())) {
-            throw new RuntimeException("Image does not belong to this product");
+                .orElseThrow(() -> new EntityNotFoundException("Product not found"));
+        ProductImage toSet = productImageRepository.findById(imageId)
+                .orElseThrow(() -> new EntityNotFoundException("Image not found"));
+        if (!toSet.getProduct().getId().equals(productId)) {
+            throw new IllegalArgumentException("Image does not belong to this product");
         }
 
-        // Set all images to non-primary
-        product.getImages().forEach(img -> img.setPrimary(false));
+        // 2) bulk‐clear old primary flags
+        productImageRepository.clearPrimaryFlags(productId);
 
-        // Set the new primary image
-        newPrimaryImage.setPrimary(true);
+        // 3) set the new primary
+        productImageRepository.setPrimaryFlag(imageId);
 
-        // Update the legacy imageUrl field
-        product.setImageUrl(newPrimaryImage.getImageUrl());
+        // 4) update legacy imageUrl on the product
+        product.setImageUrl(toSet.getImageUrl());
 
-        return productRepository.save(product);
+        // 5) save & flush the product so you also see the UPDATE on product.image_url
+        return productRepository.saveAndFlush(product);
     }
-
     /**
      * Reorder product images
      * @param productId Product ID

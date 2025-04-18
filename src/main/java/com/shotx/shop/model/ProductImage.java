@@ -13,14 +13,14 @@ public class ProductImage {
     private String imageUrl;
 
     // Is this the main/primary image for the product
-    @Column(name = "`primary`") // Use backticks to escape the reserved keyword
-    private boolean primary = false;
+    @Column(name = "is_primary") // Use backticks to escape the reserved keyword
+    private boolean isPrimary = false;
 
     // Display order for the images
     private Integer displayOrder = 0;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "product_id", nullable = false)
     @JsonBackReference
     private Product product;
 
@@ -32,10 +32,10 @@ public class ProductImage {
         this.product = product;
     }
 
-    public ProductImage(String imageUrl, Product product, boolean primary, Integer displayOrder) {
+    public ProductImage(String imageUrl, Product product, boolean isPrimary, Integer displayOrder) {
         this.imageUrl = imageUrl;
         this.product = product;
-        this.primary = primary;
+        this.isPrimary = isPrimary;
         this.displayOrder = displayOrder;
     }
 
@@ -64,12 +64,12 @@ public class ProductImage {
         this.product = product;
     }
 
-    public boolean isPrimary() {
-        return primary;
+    public boolean isIsPrimary() {
+        return isPrimary;
     }
 
-    public void setPrimary(boolean primary) {
-        this.primary = primary;
+    public void setIsPrimary(boolean primary) {
+        this.isPrimary = primary;
     }
 
     public Integer getDisplayOrder() {

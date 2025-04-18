@@ -25,7 +25,7 @@ public class Product {
     private String description;
 
     @NotNull(message = "Product price is required")
-    @DecimalMin(value = "0.0", inclusive = true, message = "Price must be a positive value")
+    @DecimalMin(value = "0.01", inclusive = true, message = "Price must be at least 0.01")
     private BigDecimal price;
 
     @ManyToOne
@@ -41,11 +41,13 @@ public class Product {
     @Min(value = 0, message = "Stock quantity cannot be negative")
     private Integer stock = 0;
 
-    // New relationship for multiple images
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "product",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
     @JsonManagedReference
     private List<ProductImage> images = new ArrayList<>();
-
     // Constructors
     public Product() {}
 
@@ -102,7 +104,7 @@ public class Product {
     public String getImageUrl() {
         // If we have a primary image in the collection, use that
         ProductImage primaryImage = this.images.stream()
-                .filter(ProductImage::isPrimary)
+                .filter(ProductImage::isIsPrimary)
                 .findFirst()
                 .orElse(null);
 
@@ -135,15 +137,14 @@ public class Product {
     }
 
     // Add image to product
-    public void addImage(ProductImage image) {
-        images.add(image);
-        image.setProduct(this);
+    public void addImage(ProductImage img) {
+        images.add(img);
+        img.setProduct(this);
     }
 
-    // Remove image from product
-    public void removeImage(ProductImage image) {
-        images.remove(image);
-        image.setProduct(null);
+    public void removeImage(ProductImage img) {
+        images.remove(img);
+        img.setProduct(null);
     }
 
     // Helper method to decrease stock
