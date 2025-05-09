@@ -20,7 +20,7 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
         WHERE pi.product.id = :productId
           AND pi.isPrimary = true
         """)
-    int clearPrimaryFlags(@Param("productId") Long productId);
+    void clearPrimaryFlags(@Param("productId") Long productId);
 
     // mark the chosen image as primary
     @Modifying
@@ -29,7 +29,7 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
           SET pi.isPrimary = true
         WHERE pi.id = :imageId
         """)
-    int setPrimaryFlag(@Param("imageId") Long imageId);
+    void setPrimaryFlag(@Param("imageId") Long imageId);
 
     List<ProductImage> findByProductId(Long productId);
 

@@ -60,7 +60,7 @@ public class ProductService {
     /**
      * Search for products by name, description, or category within specified categories
      *
-     * @param query The search term
+     * @param query       The search term
      * @param categoryIds List of category IDs to filter by
      * @return List of products matching the search criteria and categories
      */
@@ -118,7 +118,8 @@ public class ProductService {
 
     /**
      * Checks if there is sufficient stock for a product
-     * @param productId Product ID
+     *
+     * @param productId         Product ID
      * @param requestedQuantity Quantity requested
      * @return True if sufficient stock exists, false otherwise
      */
@@ -131,8 +132,9 @@ public class ProductService {
 
     /**
      * Decreases the stock of a product by the given quantity
+     *
      * @param productId Product ID
-     * @param quantity Quantity to decrease
+     * @param quantity  Quantity to decrease
      * @return Updated product
      * @throws RuntimeException If insufficient stock
      */
@@ -150,51 +152,13 @@ public class ProductService {
 
     /**
      * Upload an image for a product and set it as primary if specified
+     *
      * @param productId Product ID
-     * @param file Image file to upload
+     * @param file      Image file to upload
      * @param isPrimary Whether this image should be the primary product image
      * @return The updated product
      * @throws IOException If there's an error saving the file
      */
-
-//    @Transactional
-//    public Product uploadProductImage(Long productId, MultipartFile file, boolean isPrimary) throws IOException {
-//        Product product = productRepository.findById(productId)
-//                .orElseThrow(() -> new RuntimeException("Product not found"));
-//
-//        // Generate a unique filename to avoid conflicts
-//        String originalFilename = file.getOriginalFilename();
-//        String extension = "";
-//        if (originalFilename != null && originalFilename.contains(".")) {
-//            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-//        }
-//        String filename = UUID.randomUUID().toString() + extension;
-//
-//        // Save the file
-//        Path filePath = Paths.get(uploadDir, filename);
-//        Files.copy(file.getInputStream(), filePath);
-//
-//        // Create a new product image
-//        String imageUrl = "/uploads/" + filename;
-//
-//        // If this is set as primary, update any existing primary images
-//        if (isPrimary) {
-//            product.getImages().forEach(img -> img.setIsPrimary(false));
-//        }
-//
-//        // Determine the display order (simply add it at the end)
-//        int displayOrder = product.getImages().size();
-//
-//        ProductImage productImage = new ProductImage(imageUrl, product, isPrimary, displayOrder);
-//        product.addImage(productImage);
-//
-//        // For backward compatibility, also set the imageUrl field if this is the primary image
-//        if (isPrimary) {
-//            product.setImageUrl(imageUrl);
-//        }
-//
-//        return productRepository.save(product);
-//    }
 
     @Transactional(rollbackFor = Exception.class)
     public Product uploadProductImage(Long productId,
@@ -238,8 +202,9 @@ public class ProductService {
 
     /**
      * Delete a product image
+     *
      * @param productId Product ID
-     * @param imageId Image ID to delete
+     * @param imageId   Image ID to delete
      * @return The updated product
      */
     @Transactional
@@ -294,8 +259,9 @@ public class ProductService {
 
     /**
      * Set a product image as the primary image
+     *
      * @param productId Product ID
-     * @param imageId Image ID to set as primary
+     * @param imageId   Image ID to set as primary
      * @return The updated product
      */
     @Transactional
@@ -321,10 +287,12 @@ public class ProductService {
         // 5) save & flush the product so you also see the UPDATE on product.image_url
         return productRepository.saveAndFlush(product);
     }
+
     /**
      * Reorder product images
+     *
      * @param productId Product ID
-     * @param imageIds Ordered list of image IDs
+     * @param imageIds  Ordered list of image IDs
      * @return The updated product
      */
     @Transactional
