@@ -9,8 +9,6 @@ public class ShopApplication {
 //	private static String stripeApiKey;
     public static void main(String[] args) {
         SpringApplication.run(ShopApplication.class, args);
-
     }
-
 
 }

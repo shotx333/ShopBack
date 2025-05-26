@@ -25,10 +25,8 @@ public class AuthService {
         return token;
     }
 
-
     public void revokeToken(String token) {
         redisTemplate.delete(token);
     }
-
 
 }

@@ -4,13 +4,16 @@ import com.shotx.shop.model.UserAuthRequest;
 import com.shotx.shop.model.Users;
 import com.shotx.shop.service.AuthService;
 import com.shotx.shop.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
+@Validated
 public class AuthController {
 
     private final UserService userService;
@@ -24,9 +27,9 @@ public class AuthController {
 
     // Endpoint to register a new user
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserAuthRequest userAuthRequest) {
+    public ResponseEntity<?> register(@Valid @RequestBody UserAuthRequest userAuthRequest) {
         try {
-            Users user = userService.registerUser(userAuthRequest.getUsername(), userAuthRequest.getPassword());
+            Users user = userService.registerUser(userAuthRequest.getUsername(), userAuthRequest.getEmail(), userAuthRequest.getPassword());
             return ResponseEntity.ok("User registered with id: " + user.getId());
         } catch (RuntimeException ex) {
             return ResponseEntity.badRequest().body(ex.getMessage());

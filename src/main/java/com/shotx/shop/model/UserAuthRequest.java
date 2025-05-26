@@ -3,6 +3,7 @@ package com.shotx.shop.model;
 public class UserAuthRequest {
     private String username;
     private String password;
+    private String email;
     // getters and setters
 
     public String getUsername() {
@@ -19,5 +20,13 @@ public class UserAuthRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }
