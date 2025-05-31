@@ -1,5 +1,6 @@
 package com.shotx.shop.controller;
 
+import com.shotx.shop.model.RegisterRequest;
 import com.shotx.shop.model.UserAuthRequest;
 import com.shotx.shop.model.Users;
 import com.shotx.shop.service.AuthService;
@@ -25,15 +26,10 @@ public class AuthController {
         this.authService = authService;
     }
 
-    // Endpoint to register a new user
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody UserAuthRequest userAuthRequest) {
-        try {
-            Users user = userService.registerUser(userAuthRequest.getUsername(), userAuthRequest.getEmail(), userAuthRequest.getPassword());
-            return ResponseEntity.ok("User registered with id: " + user.getId());
-        } catch (RuntimeException ex) {
-            return ResponseEntity.badRequest().body(ex.getMessage());
-        }
+    public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest req){
+        userService.register(req);
+        return ResponseEntity.ok().build();
     }
 
     // Endpoint to login a user and return an auth token
